@@ -19,17 +19,46 @@ At the time of writing, the amount of variables [that determine if a machine is 
 
 # Installation
 
+
 This tool currently needs [cube0x0](https://github.com/cube0x0)'s Impacket fork containing the MS-PAR implementation necessary for one of the checks. This change has been submitted to Impacket in [this pull request](https://github.com/SecureAuthCorp/impacket/pull/1114).
 
+
+Docker:
 ```
 git clone https://github.com/byt3bl33d3r/ItWasAllADream
-cd ItWasAllADream && pip3 install .
+cd ItWasAllADream && docker build -t itwasalladream .
+docker run -it itwasalladream -u user -p password -d domain 192.168.1.0/24
 ```
 
+Dev install requires [Poetry](https://python-poetry.org/):
+```
+git clone https://github.com/byt3bl33d3r/ItWasAllADream
+cd ItWasAllADream && poetry install && poetry shell
+itwasalladream -u user -p password -d domain 192.168.1.0/24
+```
 # Usage
 
 ```
-itwasalladream -u user -p password -d domain 192.168.1.0/24
+usage: itwasalladream [-h] -u USERNAME [-p PASSWORD] -d DOMAIN [--timeout TIMEOUT] [--threads THREADS] [-v] target
+
+PrintNightmare (CVE-2021-34527) scanner
+
+positional arguments:
+  target                Target subnet in CIDR notation
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u USERNAME, --username USERNAME
+                        username to authenticate as (default: None)
+  -p PASSWORD, --password PASSWORD
+                        password to authenticate as. If not specified will prompt. (default: None)
+  -d DOMAIN, --domain DOMAIN
+                        domain to authenticate as (default: None)
+  --timeout TIMEOUT     Connection timeout in secods (default: 30)
+  --threads THREADS     Max concurrent threads (default: 100)
+  -v, --verbose         Enable verbose output (default: False)
+
+I used to read Word Up magazine!
 ```
 
 As the exploit requires you to be authenticated to Active Directory, you need to supply credentials. If the password isn't supplied it will prompt you to enter it.
