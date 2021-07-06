@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "itwasalladream"
+version = "0.0.1"
+description = ""
+authors = ["Marcello Salvati <byt3bl33d3r@pm.me>"]
+readme = "README.md"
+homepage = "https://github.com/byt3bl33d3r/ItWasAllADream"
+repository = "https://github.com/byt3bl33d3r/ItWasAllADream"
+exclude = ["tests"]
+include = ["LICENSE"]
+license = ""
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+
+packages = [
+    { include = "itwasalladream"}
+]
+
+[tool.poetry.scripts]
+itwasalladream = 'itwasalladream.__main__:main'
+
+[tool.poetry.dependencies]
+python = "^3.8.0"
+impacket = {git = "https://github.com/cube0x0/impacket.git"}
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+flake8 = "*"
+black = "*"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
