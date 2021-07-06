@@ -6,7 +6,7 @@ This tool has "de-fanged" versions of the [Python exploits](https://github.com/c
 
 # Why?
 
-POV, trying to determine if something is vulnerable to PrintNighmare:
+POV, trying to determine if something is vulnerable to PrintNightmare:
 
 ![cons](https://user-images.githubusercontent.com/5151193/124521349-0d278180-dda4-11eb-9643-4facd4b1c3fe.jpg)
 
