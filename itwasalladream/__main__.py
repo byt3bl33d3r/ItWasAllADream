@@ -165,7 +165,7 @@ def main():
                 targets = f.read().splitlines()
     else:
         try:
-            targets = ipaddress.ip_network(args.target)
+            targets = ipaddress.ip_network(args.target, strict=False)
             log.debug("Target is CIDR network or IP Address")
         except ValueError:
             log.debug("Target is single hostname")
