@@ -4,6 +4,8 @@ A [CVE-2021-34527](https://msrc.microsoft.com/update-guide/vulnerability/CVE-202
 
 This tool has "de-fanged" versions of the [Python exploits](https://github.com/cube0x0/CVE-2021-1675), it does *not* actually exploit the hosts however it does use the same vulnerable RPC calls used during exploitation to determine if hosts are vulnerable.
 
+**Update July 7th 2021: This also checks if host(s) are vulnerable using the [UNC bypass](https://twitter.com/gentilkiwi/status/1412771368534528001) discovered by [@gentilkiwi](https://twitter.com/gentilkiwi)**
+
 # Why?
 
 POV, trying to determine if something is vulnerable to PrintNightmare:

