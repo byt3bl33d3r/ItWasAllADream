@@ -22,7 +22,7 @@ At the time of writing, the amount of variables [that determine if a machine is 
 
 ~~This tool currently needs [cube0x0](https://github.com/cube0x0)'s Impacket fork containing the MS-PAR implementation necessary for one of the checks. This change has been submitted to Impacket in [this pull request](https://github.com/SecureAuthCorp/impacket/pull/1114).~~
 
-You need to install the latest version of [Impacket](https://github.com/SecureAuthCorp/impacket) which has the MS-PAR implementation necessary for one of the checks. (Both of the installation methods below do this automatically for you)
+You need to install [Impacket](https://github.com/SecureAuthCorp/impacket) from git as it has the MS-PAR implementation necessary for one of the checks. (Both of the installation methods below do this automatically for you)
 
 Docker:
 ```
