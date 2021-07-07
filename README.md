@@ -20,8 +20,9 @@ At the time of writing, the amount of variables [that determine if a machine is 
 # Installation
 
 
-This tool currently needs [cube0x0](https://github.com/cube0x0)'s Impacket fork containing the MS-PAR implementation necessary for one of the checks. This change has been submitted to Impacket in [this pull request](https://github.com/SecureAuthCorp/impacket/pull/1114).
+~~This tool currently needs [cube0x0](https://github.com/cube0x0)'s Impacket fork containing the MS-PAR implementation necessary for one of the checks. This change has been submitted to Impacket in [this pull request](https://github.com/SecureAuthCorp/impacket/pull/1114).~~
 
+You need to install the latest version of [Impacket](https://github.com/SecureAuthCorp/impacket) which has the MS-PAR implementation necessary for one of the checks. (Both of the installation methods below do this automatically for you)
 
 Docker:
 ```
@@ -36,6 +37,7 @@ git clone https://github.com/byt3bl33d3r/ItWasAllADream
 cd ItWasAllADream && poetry install && poetry shell
 itwasalladream -u user -p password -d domain 192.168.1.0/24
 ```
+
 # Usage
 
 ```

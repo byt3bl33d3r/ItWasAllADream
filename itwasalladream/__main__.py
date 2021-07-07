@@ -33,7 +33,6 @@ def monitor_threadpool(pool, targets):
     while True:
         sleep(10)
         pool_size = pool._work_queue.qsize()
-        log.info(pool_size)
         finished_threads = targets - pool_size
         percentage = Decimal(finished_threads) / Decimal(targets) * Decimal(100)
         log.info(f"completed: {percentage:.2f}% ({finished_threads}/{targets})")

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "itwasalladream"
-version = "0.0.1"
+version = "0.0.2"
 description = ""
 authors = ["Marcello Salvati <byt3bl33d3r@pm.me>"]
 readme = "README.md"
@@ -24,7 +24,7 @@ itwasalladream = 'itwasalladream.__main__:main'
 
 [tool.poetry.dependencies]
 python = "^3.8.0"
-impacket = {git = "https://github.com/cube0x0/impacket.git"}
+impacket = {git = "https://github.com/SecureAuthCorp/impacket.git"}
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
