@@ -39,12 +39,12 @@ itwasalladream -u user -p password -d domain 192.168.1.0/24
 # Usage
 
 ```
-usage: itwasalladream [-h] -u USERNAME [-p PASSWORD] -d DOMAIN [--timeout TIMEOUT] [--threads THREADS] [-v] target
+usage: itwasalladream [-h] -u USERNAME [-p PASSWORD] -d DOMAIN [--timeout TIMEOUT] [--threads THREADS] [-v] [--csv-column CSV_COLUMN] target
 
 PrintNightmare (CVE-2021-34527) scanner
 
 positional arguments:
-  target                Target subnet in CIDR notation
+  target                Target subnet in CIDR notation, CSV file or newline-delimited text file
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -57,6 +57,8 @@ optional arguments:
   --timeout TIMEOUT     Connection timeout in secods (default: 30)
   --threads THREADS     Max concurrent threads (default: 100)
   -v, --verbose         Enable verbose output (default: False)
+  --csv-column CSV_COLUMN
+                        If target argument is a CSV file, this argument specifies which column to parse (default: DNSHostName)
 
 I used to read Word Up magazine!
 ```
