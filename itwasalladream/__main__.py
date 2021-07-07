@@ -1,6 +1,5 @@
 import concurrent.futures
 import csv
-from sys import path
 import threading
 import logging
 import pathlib
