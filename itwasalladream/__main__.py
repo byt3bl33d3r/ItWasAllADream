@@ -1,5 +1,6 @@
 import concurrent.futures
 import csv
+from sys import path
 import threading
 import logging
 import pathlib
@@ -135,7 +136,8 @@ def main():
     parser.add_argument("--timeout", default=30, type=int, help="Connection timeout in secods")
     parser.add_argument("--threads", default=100, type=int, help="Max concurrent threads")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
-    parser.add_argument("target", help="Target subnet in CIDR notation")
+    parser.add_argument("--csv-column", default="DNSHostName", help="If target argument is a CSV file, this argument specifies which column to parse")
+    parser.add_argument("target", help="Target subnet in CIDR notation, CSV file or newline-delimited text file")
 
     args = parser.parse_args()
 
@@ -146,68 +148,101 @@ def main():
         args.password = getpass("Password:")
 
     port = "445"
-    targets = ipaddress.ip_network(args.target)
+    targets = []
+
+    if pathlib.Path(args.target).exists():
+        target_file = pathlib.Path(args.target)
+        if target_file.suffix == ".csv":
+            log.debug("Target is CSV file")
+            with target_file.open() as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    targets.append(
+                        row[args.csv_column]
+                    )
+        else:
+            log.debug("Target is newline-delimited file")
+            with target_file.open() as f:
+                targets = f.read().splitlines()
+    else:
+        try:
+            targets = ipaddress.ip_network(args.target)
+            log.debug("Target is CIDR network or IP Address")
+        except ValueError:
+            log.debug("Target is single hostname")
+            targets.append(args.target)
 
     report_fields = ["address", "vulnerable", "exploitable_over_ms_rprn", "exploitable_over_ms_par", "reason_ms_rprn", "reason_ms_par"]
     scan_results = defaultdict(dict)
 
     time = datetime.now().strftime("%Y_%m_%d_%H%M%S")
 
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.threads) as ex:
+        rprn_checks = {
+            ex.submit(
+                check,
+                rprn_vector,
+                args.username,
+                args.password, 
+                args.domain,
+                str(address), 
+                port,
+                args.timeout
+            ): str(address)
+            for address in targets
+        }
+
+        par_checks = {
+            ex.submit(
+                check,
+                par_vector,
+                args.username,
+                args.password,
+                args.domain,
+                str(address),
+                port,
+                args.timeout
+            ): str(address)
+            for address in targets
+        }
+
+        t = threading.Thread(
+            target=monitor_threadpool,
+            args=(
+                ex,
+                targets.num_addresses 
+                if hasattr(targets, "num_addresses") 
+                else len(targets),
+            )
+        )
+
+        t.setDaemon(True)
+        t.start()
+
+        future_to_host = {**rprn_checks, **par_checks}
+        for future in concurrent.futures.as_completed(future_to_host):
+            host = future_to_host[future]
+
+            try:
+                data = future.result()
+            except Exception as e:
+                log.error(f"Check for {host} generated an exception: {e}")
+            else:
+                scan_results[host]["address"] = host
+
+                if data["protocol"] == "MS-RPRN":
+                    scan_results[host]["exploitable_over_ms_rprn"] = data["vulnerable"]
+                    scan_results[host]["reason_ms_rprn"] = data["reason"]
+
+                elif data["protocol"] == "MS-PAR":
+                    scan_results[host]["exploitable_over_ms_par"] = data["vulnerable"]
+                    scan_results[host]["reason_ms_par"] = data["reason"]
+
+    log.info("Scan complete, generating report. Please wait...")
+
     with open(f"report_{time}.csv", "w") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=report_fields)
         writer.writeheader()
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=args.threads) as ex:
-            rprn_checks = {
-                ex.submit(
-                    check,
-                    rprn_vector,
-                    args.username,
-                    args.password, 
-                    args.domain,
-                    str(address), 
-                    port,
-                    args.timeout
-                ): str(address)
-                for address in targets
-            }
-
-            par_checks = {
-                ex.submit(
-                    check,
-                    par_vector,
-                    args.username,
-                    args.password,
-                    args.domain,
-                    str(address),
-                    port,
-                    args.timeout
-                ): str(address)
-                for address in targets
-            }
-
-            t = threading.Thread(target=monitor_threadpool, args=(ex, targets.num_addresses,))
-            t.setDaemon(True)
-            t.start()
-
-            future_to_host = {**rprn_checks, **par_checks}
-            for future in concurrent.futures.as_completed(future_to_host):
-                host = future_to_host[future]
-
-                try:
-                    data = future.result()
-                except Exception as e:
-                    log.error(f"Check for {host} generated an exception: {e}")
-                else:
-                    scan_results[host]["address"] = host
-
-                    if data["protocol"] == "MS-RPRN":
-                        scan_results[host]["exploitable_over_ms_rprn"] = data["vulnerable"]
-                        scan_results[host]["reason_ms_rprn"] = data["reason"]
-
-                    elif data["protocol"] == "MS-PAR":
-                        scan_results[host]["exploitable_over_ms_par"] = data["vulnerable"]
-                        scan_results[host]["reason_ms_par"] = data["reason"]
 
         for _,v in scan_results.items():
             if (v["exploitable_over_ms_rprn"] == True) or (v["exploitable_over_ms_par"] == True):
@@ -218,3 +253,5 @@ def main():
                 v["vulnerable"] = "No"
 
             writer.writerow(v)
+
+    log.info(f"report_{time}.csv generated successfully")
