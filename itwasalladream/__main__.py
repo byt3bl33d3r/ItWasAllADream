@@ -128,7 +128,12 @@ def check(vector, username, password, domain, address, port, timeout, share="\\\
     return results
 
 def main():
-    parser = argparse.ArgumentParser(description="PrintNightmare (CVE-2021-34527) scanner", epilog="I used to read Word Up magazine!", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description="PrintNightmare (CVE-2021-34527) scanner",
+        epilog="I used to read Word Up magazine!", 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
     parser.add_argument("-u", "--username", required=True, help="username to authenticate as")
     parser.add_argument("-p", "--password", help="password to authenticate as. If not specified will prompt.")
     parser.add_argument("-d", "--domain", required=True, help="domain to authenticate as")
@@ -136,7 +141,7 @@ def main():
     parser.add_argument("--threads", default=100, type=int, help="Max concurrent threads")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
     parser.add_argument("--csv-column", default="DNSHostName", help="If target argument is a CSV file, this argument specifies which column to parse")
-    parser.add_argument("target", help="Target subnet in CIDR notation, CSV file or newline-delimited text file")
+    parser.add_argument("target", type=str, help="Target subnet in CIDR notation, CSV file or newline-delimited text file")
 
     args = parser.parse_args()
 
@@ -156,13 +161,27 @@ def main():
             with target_file.open() as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    targets.append(
-                        row[args.csv_column]
-                    )
+                    try:
+                        targets.extend(
+                            list(
+                                ipaddress.ip_network(
+                                    row[args.csv_column], 
+                                    strict=False
+                                )
+                            )
+                        )
+                    except ValueError:
+                        targets.append(row[args.csv_column])
         else:
             log.debug("Target is newline-delimited file")
             with target_file.open() as f:
-                targets = f.read().splitlines()
+                for line in f.read().splitlines():
+                    try:
+                        targets.extend(
+                            list(ipaddress.ip_network(line, strict=False))
+                        )
+                    except ValueError:
+                        targets.append(line)
     else:
         try:
             targets = ipaddress.ip_network(args.target, strict=False)
