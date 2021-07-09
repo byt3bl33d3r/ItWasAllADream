@@ -81,7 +81,7 @@ def check(vector, username, password, domain, address, port, timeout, share="\\\
         except Exception as e:
             log.error(f"Failed to enumerate remote pDriverPath, unable to determine if host is vulnerable. Error: {e}")
             results["vulnerable"] = "unknown"
-            results["reason"] = f"Unkown error while trying to automatically enumerate printer drivers: '{e}'"
+            results["reason"] = f"Unknown error while trying to automatically enumerate printer drivers: '{e}'"
 
         except AutomaticDriverEnumerationError as e:
             log.error("Failed to automatically enumerate printer drivers, unable to determine if host is vulnerable.")
