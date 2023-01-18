@@ -24,7 +24,7 @@ itwasalladream = 'itwasalladream.__main__:main'
 
 [tool.poetry.dependencies]
 python = "^3.8.0"
-impacket = {git = "https://github.com/SecureAuthCorp/impacket.git"}
+impacket = {git = "https://github.com/fortra/impacket.git"}
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
