@@ -6,7 +6,7 @@ RUN apt-get update && \
 
 COPY . .
 
-RUN pip3 install poetry && \
+RUN pip3 install poetry pyOpenSSL dsinternals && \
     poetry config virtualenvs.create false && \
     poetry install
 
