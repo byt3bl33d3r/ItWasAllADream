@@ -37,21 +37,27 @@ def monitor_threadpool(pool, targets):
         percentage = Decimal(finished_threads) / Decimal(targets) * Decimal(100)
         log.info(f"completed: {percentage:.2f}% ({finished_threads}/{targets})")
 
-def check(vector, username, password, domain, address, port, timeout, share="\\\\{0}\\itwasalladream\\bogus.dll"):
+def check(vector, username, password, nthash, domain, address, port, timeout, share="\\\\{0}\\itwasalladream\\bogus.dll"):
     results = {
         "address": address,
         "protocol": vector.PROTOCOL,
         "vulnerable": False,
         "reason": ""
     }
-
+    lmhash = ""
+    if nthash != "":
+        lmhash = "00000000000000000000000000000000"
+        password = ""
+    else:
+        nthash = ""
+        lmhash = ""
     try:
         dce = vector.connect(
             username,
             password,
             domain,
-            "",
-            "",
+            lmhash,
+            nthash,
             address,
             port,
             timeout
@@ -104,7 +110,7 @@ def check(vector, username, password, domain, address, port, timeout, share="\\\
 
                 elif str(e).find("ERROR_INVALID_PARAMETER") != -1:
                     log.info(f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Response indicates host has the CVE-2021-34527 patch applied *but* has Point & Print enabled. Re-trying with known UNC bypass to validate.")
-                    results = check(vector, username, password, domain, address, port, timeout, share="\\??\\UNC\\{0}\\itwasalladream\\bogus.dll")
+                    results = check(vector, username, password, nthash, domain, address, port, timeout, share="\\??\\UNC\\{0}\\itwasalladream\\bogus.dll")
                     results["reason"] = f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Response indicates host has the CVE-2021-34527 patch applied *but* has Point & Print enabled."
 
                 #elif str(e).find("ERROR_INVALID_HANDLE") != -1:
@@ -135,7 +141,8 @@ def main():
     )
 
     parser.add_argument("-u", "--username", required=True, help="username to authenticate as")
-    parser.add_argument("-p", "--password", help="password to authenticate as. If not specified will prompt.")
+    parser.add_argument("-p", "--password", default="", help="password to authenticate as. If not specified will prompt.")
+    parser.add_argument("-n", "--nthash", default="", help="NT Hash for PtH. If specified, will not prompt for password.")
     parser.add_argument("-d", "--domain", required=True, help="domain to authenticate as")
     parser.add_argument("--timeout", default=30, type=int, help="Connection timeout in secods")
     parser.add_argument("--threads", default=100, type=int, help="Max concurrent threads")
@@ -148,7 +155,7 @@ def main():
     if args.verbose:
         log.setLevel(logging.DEBUG)
 
-    if not args.password:
+    if args.password == "" and args.nthash == "":
         args.password = getpass("Password:")
 
     port = "445"
@@ -202,6 +209,7 @@ def main():
                 rprn_vector,
                 args.username,
                 args.password, 
+                args.nthash, 
                 args.domain,
                 str(address), 
                 port,
@@ -216,6 +224,7 @@ def main():
                 par_vector,
                 args.username,
                 args.password,
+                args.nthash, 
                 args.domain,
                 str(address),
                 port,
