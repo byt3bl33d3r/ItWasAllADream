@@ -108,7 +108,7 @@ def check(vector, username, password, nthash, domain, address, port, timeout, sh
                     results["vulnerable"] = True
                     results["reason"] = "Host attempted to grab DLL from supplied share"
 
-                elif str(e).find("ERROR_INVALID_PARAMETER") != -1:
+                elif str(e).find("ERROR_INVALID_PARAMETER") != -1 and share != "\\??\\UNC\\{0}\\itwasalladream\\bogus.dll".format(local_ip):
                     log.info(f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Response indicates host has the CVE-2021-34527 patch applied *but* has Point & Print enabled. Re-trying with known UNC bypass to validate.")
                     results = check(vector, username, password, nthash, domain, address, port, timeout, share="\\??\\UNC\\{0}\\itwasalladream\\bogus.dll")
                     results["reason"] = f"{address} is vulnerable over {vector.PROTOCOL}. Reason: Response indicates host has the CVE-2021-34527 patch applied *but* has Point & Print enabled."
